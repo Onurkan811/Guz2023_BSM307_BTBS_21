@@ -1,13 +1,11 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import Register from "./Register"
+import axios from "axios";
 
 function App() {
-  const [count, setCount] = useState(0)
-
+  axios.defaults.baseURL='http://localhost:4040'
+  axios.defaults.withCredentials= true;
   return (
-    <div className="bg-red-500">test</div>
+    <Register/>
   )
 }
 
