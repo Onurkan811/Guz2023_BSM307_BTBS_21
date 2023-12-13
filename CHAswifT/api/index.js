@@ -1,13 +1,17 @@
 const express = require('express');
-const mongoose = require('mangoose');
+const mongoose = require('mongoose');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const User = require('./models/User');
 
-mongoose.connect(process.env.MONGO_URL, (err)=>{
-    if (err) throw err;
-});
+const connectToMongo = async () => {
+    await mongoose.connect(process.env.MONGO_URL);
+    console.log("Connected to MongoDB");
+  };
+  
+  connectToMongo();
+  
 const jwtSecret = process.env.JWT_SECRET;
 
 const app = express();
@@ -23,11 +27,18 @@ app.get('/test', (req,res) => {
 
 app.post('/register', async (req,res) =>{
     const {username,password} = req.body;
-    const createdUser = await User.create({username,password});
-    jwt.sign({userId:createdUser, id}, jwtSecret, {}, (err,token)=>{
+    try{
+        const createdUser = await User.create({username,password});
+            jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err,token)=>{
+            if(err) throw err;
+            res.cookie('token', token).status(201).json({
+               _id: createdUser._id,
+            });
+        });
+    } catch(err){
         if(err) throw err;
-        res.status(500).json('register ok')
-    });
+        res.status(500).json('error');
+    }
 });
 
 app.listen(4000);
