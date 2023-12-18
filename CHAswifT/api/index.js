@@ -1,8 +1,10 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const cookieParser = require('cookie-parser');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const bcrypt = require('bcryptjs');
 const User = require('./models/User');
 
 const connectToMongo = async () => {
@@ -13,9 +15,11 @@ const connectToMongo = async () => {
   connectToMongo();
   
 const jwtSecret = process.env.JWT_SECRET;
+const bcryptSalt = bcrypt.genSaltSync(10);
 
 const app = express();
 app.use(express.json());
+app.use(cookieParser());
 app.use(cors({
     credentials: true,
     origin: process.env.CLIENT_URL,
@@ -25,13 +29,45 @@ app.get('/test', (req,res) => {
     res.json('test works');
 });
 
+app.get('/profile', (req,res) => {
+    const token =req.cookies?.token;
+    if(token){
+        jwt.verify(token, jwtSecret, {}, (err, userData)=>{
+            if(err) throw err;
+            res.json(userData);
+        });
+    } else {
+        res.status(401).json('no token');
+    }
+
+});
+
+app.post('/login', async (req,res) =>{
+    const {username, password} = req.body;
+    const foundUser = await User.findOne({username});
+    if(foundUser) {
+        const canPass = bcrypt.compareSync(password, foundUser.password);
+        if(canPass){
+            jwt.sign({userId:foundUser._id, username}, jwtSecret, {}, (err, token) => {} );
+            res.cookie('token', token, {sameSite:'none', secure:true}).json({
+                id: foundUser._id,
+            });
+        }
+    }
+
+});
+
 app.post('/register', async (req,res) =>{
     const {username,password} = req.body;
     try{
-        const createdUser = await User.create({username,password});
-            jwt.sign({userId:createdUser._id}, jwtSecret, {}, (err,token)=>{
+        const hashedPassword = bcrypt.hashSync(password, bcryptSalt);
+        const createdUser = await User.create({
+            username:username,
+            password: hashedPassword,
+        });
+            jwt.sign({userId:createdUser._id, username}, jwtSecret, {}, (err,token)=>{
             if(err) throw err;
-            res.cookie('token', token).status(201).json({
+            res.cookie('token', token, {sameSite:'none', secure:true}).status(201).json({
                id: createdUser._id,
             });
         });
@@ -41,4 +77,4 @@ app.post('/register', async (req,res) =>{
     }
 });
 
-app.listen(4000);
+app.listen(4040);
