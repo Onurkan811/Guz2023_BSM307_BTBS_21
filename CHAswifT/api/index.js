@@ -6,6 +6,17 @@ const jwt = require('jsonwebtoken');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const User = require('./models/User');
+const ws = require("ws");
+
+
+const app = express();
+app.use(cors({
+    credentials: true,
+    origin: process.env.CLIENT_URL,
+}));
+app.use(express.json());
+app.use(cookieParser());
+
 
 const connectToMongo = async () => {
     await mongoose.connect(process.env.MONGO_URL);
@@ -17,13 +28,7 @@ const connectToMongo = async () => {
 const jwtSecret = process.env.JWT_SECRET;
 const bcryptSalt = bcrypt.genSaltSync(10);
 
-const app = express();
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-    credentials: true,
-    origin: process.env.CLIENT_URL,
-}));
+
 
 app.get('/test', (req,res) => {
     res.json('test works');
@@ -77,4 +82,31 @@ app.post('/register', async (req,res) =>{
     }
 });
 
-app.listen(4040);
+const server = app.listen(4040);
+
+const wss = new ws.WebSocketServer({server});
+wss.on('connection', (connection, req) => {
+    const cookies = req.headers.cookie;
+    if(cookies){
+        const tokenCookieString =cookies.split(';').find(str => str.startsWith('token='));
+        if(tokenCookieString){
+            const token = tokenCookieString.split("=")[1];
+            if(token){
+                jwt.verify(token, jwtSecret, {}, (err,userData)=>{
+                    if(err) throw err;
+                    const {userId, username} = userData;
+                    connection.userId = userId;
+                    connection.username = username;
+
+                });
+            }
+        }
+    }
+
+    [...wss.clients].forEach(client => {
+        client.send(JSON.stringify({
+            online: [...wss.clients].map(c => ({userId:c.userId, username:c.username}))
+        }
+        ));
+    });
+});
