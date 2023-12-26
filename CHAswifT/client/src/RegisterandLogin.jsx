@@ -1,6 +1,7 @@
 import { useContext, useState } from "react";
 import axios from 'axios';
 import { UserContext } from "./UserContext";
+import Icon from "./Icon";
 
 export default function RegisterAndLogin() {
     const[username, setUsername] = useState('');
@@ -16,26 +17,25 @@ export default function RegisterAndLogin() {
     }
 
     return(
-        <div className="bg-white h-screen flex items-center">
-            <form className="w-64 mx-auto mb-20" onSubmit={handleSubmit}>
+        <div className="h-screen flex justify-center items-center bg-cover" style={{"backgroundImage": "url('../src/assets/wallpaper.png"}}>
+            <form className="w-72 mx-auto mb-20 bg-slate-900 border border-slate-800 rounded-md p-8 shadow-xl backdrop-blur-sm bg-opacity-30" onSubmit={handleSubmit}>
 
-                <p className="mb-4 text-4xl">ChaSwifT</p>
-
+                <p className="text-white mb-10 text-4xl font-bold text-center">CHAswifT</p>
                 <input value={username} 
                     onChange={ev => setUsername(ev.target.value)} 
                     type="text" placeholder="Kullanıcı Adı" 
-                    className="block w-full rounded-sm p-2 mb-2 border"/>
+                    className="block w-full py-2.3 text-4x1 font-bold text-sm text-white text-center mb-6 bg-transparent border-0 border-b-2 border-gray-300 apperance-none dark:focus:border-blue-900 focus:outline-none focus:ring-0 focus:text-white focus:border-blue-600 "/>
 
                 <input value={password} 
                     onChange={ev => setPassword(ev.target.value)} 
                     type="password" placeholder="Şifre" 
-                    className="block w-full rounded-sm p-2 mb-2 border"/>
+                    className="block w-full py-2.3 text-4x1 font-bold text-sm text-white text-center mb-6 bg-transparent border-0 border-b-2 border-gray-300 apperance-none dark:focus:border-blue-900 focus:outline-none focus:ring-0 focus:text-white focus:border-blue-600 "/>
 
                 <button className="bg-blue-950 text-white block w-full rounded-sm p-2" >
                     {isLoginOrRegister === 'register' ? 'KAYIT OL': 'GİRİŞ YAP'}
                 </button>
 
-                <div className="text-center mt-2">
+                <div className="text-center text-xs mt-8 text-gray-400 font-bold">
                     {isLoginOrRegister === 'register' && (
                        <div>
                         Zaten üye misiniz ?&nbsp; 

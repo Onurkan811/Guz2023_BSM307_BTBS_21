@@ -1,18 +1,38 @@
-import { useContext, useEffect, useState } from "react"
+import { useContext, useEffect, useState, useRef } from "react"
+import Contact from "./Contact";
 import Avatar from "./Avatar";
+import Icon from "./Icon";
 import { UserContext } from "./UserContext";
+import _ from "lodash"
+import axios from "axios";
+
 
 export default function Chat(){
     const [ws,setWs] = useState(null);
     const [onlineUsers, setOnlineUsers] = useState({});
+    const [offlineUsers, setOfflineUsers] = useState({});
     const [selectedUserId, setSelectedUserId ] = useState(null);
-    const {username, id} = useContext(UserContext);
+    const [newMessageText, setNewMessageText] = useState('');
+    const [messages, setMessages] = useState([]);
+    const {username, id, setId, setUsername} = useContext(UserContext);
+    const divUnderMessages = useRef();
+
     useEffect(() =>{
-        const ws = new WebSocket('ws://localhost:4040');
-        setWs(ws);
-        ws.addEventListener('message', handleMessage)
+        connectToWs();
     },[]);
 
+    function connectToWs() {
+        const ws = new WebSocket('ws://localhost:4000');
+        setWs(ws);
+        ws.addEventListener('message', handleMessage);
+        ws.addEventListener('close', () => {
+          setTimeout(() => {
+            console.log('Disconnected. Trying to reconnect...no');
+            connectToWs();
+          }, 5000);
+        },5000);
+      }
+      
     function showOnlineUsers(usersArray){
         const users = {};
         usersArray.forEach(({userId,username}) => {
@@ -20,44 +40,112 @@ export default function Chat(){
         });
         setOnlineUsers(users);
     }
-    function handleMessage(e){
-        const messageData = JSON.parse(e.data);
+
+    function handleMessage(ev){
+        const messageData = JSON.parse(ev.data);
         if('online' in messageData){
             showOnlineUsers(messageData.online);
+        } else if('text' in messageData) {
+            setMessages(prev => ([...prev, {...messageData}]));
         }
     }
 
-    function selectContact(userId){
-        setSelectedUserId
+    function logout() {
+        axios.post('/logout').then(() => {
+          setWs(null);
+          setId(null);
+          setUsername(null);
+        });
+      }
+
+    function sendMessage(ev){
+        ev.preventDefault();
+        ws.send(JSON.stringify({
+                recipient: selectedUserId,
+                text: newMessageText,
+        }));
+        setNewMessageText('');
+        setMessages(prev => ([...prev, {
+            text:newMessageText, 
+            sender: id,
+            recipient: selectedUserId,
+            _id: Date.now(),
+        }]));
     }
+
+    useEffect(() => {
+        const div = divUnderMessages.current;
+        if (div) {
+            div.scrollIntoView({behaviour:'smooth', block:'end'});
+        }
+    },[messages]);
+
+    useEffect(() => {
+        axios.get('/people').then(res => {
+          const offlineUsersArr = res.data
+            .filter(p => p._id !== id)
+            .filter(p => !Object.keys(onlineUsers).includes(p._id));
+          const offlineUsers = {};
+          offlineUsersArr.forEach(p => {
+            offlineUsers[p._id] = p;
+          });
+          setOfflineUsers(offlineUsers);
+        });
+      }, [onlineUsers]);
+
+    useEffect(() => {
+        if (selectedUserId) {
+            axios.get('/messages/'+selectedUserId).then(res =>{
+                setMessages(res.data);
+            });
+        }
+    }, [selectedUserId] );
+
 
     const excludeMainUser = {...onlineUsers};
     delete excludeMainUser[id];
+
+    const messagesWithoutDupes = _.uniqBy(messages, '_id');
 
     return(
         <div className="flex h-screen" >
         
         {/* Showing online users  */}
-        <div className="bg-white w-1/3">
-            <div className="text-blue-950 font-bold flex gap-2 mb-4 p-4">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" dataSlot="icon" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
-                </svg>
-                CHAswifT
-                
+        <div className="bg-white w-1/3 flex flex-col">
+            <Icon name={'logo'}/>
+            <div className="flex-grow">
+
+            {Object.keys(excludeMainUser).sort().map(userId => (
+                <Contact
+                    key={userId}
+                    id={userId}
+                    online={true}
+                    username={excludeMainUser[userId]}
+                    onClick={() => {setSelectedUserId(userId);console.log({userId})}}
+                    selected={userId === selectedUserId} />
+          ))}
+            {Object.keys(offlineUsers).sort().map(userId => (
+                <Contact
+                    key={userId}
+                    id={userId}
+                    online={false}
+                    username={offlineUsers[userId].username}
+                    onClick={() => setSelectedUserId(userId)}
+                    selected={userId === selectedUserId} />
+          ))}
             </div>
-            {Object.keys(excludeMainUser).map(userId =>(
-                <div key={userId} onClick={() => setSelectedUserId(userId)} 
-                className={"border-b border-gray-100 flex items-center gap-2 cursor-pointer"+(userId === selectedUserId ? 'bg-blue-50': '')}>
-                    {userId === selectedUserId && (
-                        <div className="w-1 h-12 bg-blue-500 rounded-r-md"></div>
-                    )}
-                    <div className="flex gap-2 py-2 pl-4 items-center">
-                        <Avatar username={onlineUsers[userId]} userId={userId}/>
-                        <span className="text-gray-800">{onlineUsers[userId]}</span>
-                    </div>
-                </div>
-            ))}
+
+            <div className="p-2 text-center flex items-center justify-center">
+                <span className="mr-2 text-l text-grey-600 flex">
+                    <span className="mr-2 text-grey-600 flex">
+                    <Icon name={'user'}/>
+                    {username}
+                    </span>
+                </span>
+                <button 
+                onClick={logout}
+                className="text-sm bg-blue-100 py-1 px-2 text-gray-500 border rounded-md">Çıkış Yap</button>
+            </div>
         </div>
 
         <div className="flex flex-col bg-blue-50 w-2/3 p-2">
@@ -67,16 +155,38 @@ export default function Chat(){
                         <div className="text-gray-400">&larr; Mesajlaşmak için bir kullanıcı seçin</div>
                     </div>
                 )}</div>
-            <div className="flex gap-2 ">
+                {!!selectedUserId &&(
+
+                <div className="relative h-full">
+                <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
+                    {messagesWithoutDupes.map(message =>(
+                    <div key={message._id} className={(message.sender === id ? 'text-right': 'text-left')}>
+                        <div className={"text-left inline-block p-2 my-2 rounded-md text-sm "+(message.sender === id ? 'bg-blue-500 text-white':'bg-white text-gray-500')}>
+                            {message.text}
+                        </div>
+                    </div>
+                    ))}
+                    <div ref={divUnderMessages}></div>
+                </div>
+                </div>
+               
+                    
+
+                )}
+            {!!selectedUserId && (
+            <form className="flex gap-2 " onSubmit={sendMessage}>
                 <input type="text"
-                placeholder="Mesajınızı buraya yazın"
-                className="bg-white flex-grow border rounded-sm p-2" />
-                <button className="bg-blue-500 p-2 text-white rounded-sm">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" dataSlot="icon" className="w-6 h-6">
-  <path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
-</svg>
-</button>
-            </div>
+                    value={newMessageText}
+                    onChange={ev => setNewMessageText(ev.target.value)}
+                    placeholder="Mesajınızı buraya yazın"
+                    className="bg-white flex-grow border rounded-sm p-2" />
+                <button type="submit" className="bg-blue-500 p-2 text-white rounded-sm">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" dataSlot="icon" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
+                </button>
+            </form>                
+
+            )}    
+
         </div>  
         </div>
     )
