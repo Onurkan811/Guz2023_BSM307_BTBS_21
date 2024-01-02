@@ -10,13 +10,16 @@ const Message = require('./models/Message');
 const ws = require("ws");
 
 
+const jwtSecret = process.env.JWT_SECRET;
+const bcryptSalt = bcrypt.genSaltSync(10);
+
 const app = express();
+app.use(express.json());
+app.use(cookieParser());
 app.use(cors({
     credentials: true,
     origin: process.env.CLIENT_URL,
 }));
-app.use(express.json());
-app.use(cookieParser());
 
 async function getUserDataFromRequest(req){
     return new Promise((resolve, reject)=> {
@@ -39,10 +42,6 @@ const connectToMongo = async () => {
   
   connectToMongo();
   
-const jwtSecret = process.env.JWT_SECRET;
-const bcryptSalt = bcrypt.genSaltSync(10);
-
-
 
 app.get('/test', (req,res) => {
     res.json('test works');
@@ -131,16 +130,16 @@ wss.on('connection', (connection, req) => {
     });
     }
     //Pinging user to is online or not
-    connection.isAlive = true;
-    connection.timer = setInterval(()=> {
+    connection.timer = setInterval(() => {
         connection.ping();
-        connection.deathTimer = setTimeout(()=>{
-            connection.isAlive = false;
-            clearInterval(connection.timer);
-            connection.terminate();
-            notifyOnlineUsers();
-        }, 5000);
-    }, 6000);
+        connection.deathTimer = setTimeout(() => {
+          connection.isAlive = false;
+          clearInterval(connection.timer);
+          connection.terminate();
+          notifyOnlineUsers();
+          console.log('dead');
+        }, 1000);
+      }, 5000);
 
     connection.on('pong', ()=>{
         clearTimeout(connectToMongo.deathTimer);
@@ -149,18 +148,18 @@ wss.on('connection', (connection, req) => {
     // getting username and id from cookie for connection
     const cookies = req.headers.cookie;
     if (cookies) {
-      const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
-      if (tokenCookieString) {
+        const tokenCookieString = cookies.split(';').find(str => str.startsWith('token='));
+        if (tokenCookieString) {
         const token = tokenCookieString.split('=')[1];
         if (token) {
-          jwt.verify(token, jwtSecret, {}, (err, userData) => {
+            jwt.verify(token, jwtSecret, {}, (err, userData) => {
             if (err) throw err;
             const {userId, username} = userData;
             connection.userId = userId;
             connection.username = username;
-          });
+            });
         }
-      }
+        }
     }
 
     connection.on('message', async (message) =>{

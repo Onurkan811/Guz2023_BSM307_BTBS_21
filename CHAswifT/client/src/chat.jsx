@@ -5,21 +5,21 @@ import Icon from "./Icon";
 import { UserContext } from "./UserContext";
 import _ from "lodash"
 import axios from "axios";
-
+import cookiejs from "js-cookie";
 
 export default function Chat(){
     const [ws,setWs] = useState(null);
-    const [onlineUsers, setOnlineUsers] = useState({});
-    const [offlineUsers, setOfflineUsers] = useState({});
+    const [onlinePeople, setOnlinePeople] = useState({});
+    const [offlinePeople, setOfflinePeople] = useState({});
     const [selectedUserId, setSelectedUserId ] = useState(null);
     const [newMessageText, setNewMessageText] = useState('');
     const [messages, setMessages] = useState([]);
     const {username, id, setId, setUsername} = useContext(UserContext);
     const divUnderMessages = useRef();
 
-    useEffect(() =>{
+    useEffect(() => {
         connectToWs();
-    },[]);
+    },[selectedUserId]);
 
     function connectToWs() {
         const ws = new WebSocket('ws://localhost:4000');
@@ -29,40 +29,50 @@ export default function Chat(){
           setTimeout(() => {
             console.log('Disconnected. Trying to reconnect...no');
             connectToWs();
-          }, 5000);
-        },5000);
-      }
-      
-    function showOnlineUsers(usersArray){
-        const users = {};
-        usersArray.forEach(({userId,username}) => {
-            users[userId] = username;
+          }, 1000);
         });
-        setOnlineUsers(users);
+    }
+      
+    function showOnlinePeople(peopleArray){
+        const people = {};
+        peopleArray.forEach(({userId,username}) => {
+            people[userId] = username;
+        });
+        setOnlinePeople(people);
     }
 
     function handleMessage(ev){
         const messageData = JSON.parse(ev.data);
         if('online' in messageData){
-            showOnlineUsers(messageData.online);
+            showOnlinePeople(messageData.online);
         } else if('text' in messageData) {
-            setMessages(prev => ([...prev, {...messageData}]));
+            if(messageData.sender == selectedUserId){
+                setMessages(prev => ([...prev, {...messageData}]));
+            }
         }
     }
 
     function logout() {
         axios.post('/logout').then(() => {
           setWs(null);
-          setId(null);
-          setUsername(null);
+          cookiejs.remove('token');
+          window.location.reload(true);
         });
       }
+
+    const removeToken = async () => {
+        try {
+            await AsyncStorage.removeItem("token");
+        } catch (error) {
+            console.log("Renove authentication token failed :", error?.message);
+        }
+    };
 
     function sendMessage(ev){
         ev.preventDefault();
         ws.send(JSON.stringify({
-                recipient: selectedUserId,
-                text: newMessageText,
+            recipient: selectedUserId,
+            text: newMessageText,
         }));
         setNewMessageText('');
         setMessages(prev => ([...prev, {
@@ -82,16 +92,16 @@ export default function Chat(){
 
     useEffect(() => {
         axios.get('/people').then(res => {
-          const offlineUsersArr = res.data
+          const offlinePeopleArr = res.data
             .filter(p => p._id !== id)
-            .filter(p => !Object.keys(onlineUsers).includes(p._id));
-          const offlineUsers = {};
-          offlineUsersArr.forEach(p => {
-            offlineUsers[p._id] = p;
+            .filter(p => !Object.keys(onlinePeople).includes(p._id));
+          const offlinePeople = {};
+          offlinePeopleArr.forEach(p => {
+            offlinePeople[p._id] = p;
           });
-          setOfflineUsers(offlineUsers);
+          setOfflinePeople(offlinePeople);
         });
-      }, [onlineUsers]);
+      }, [onlinePeople]);
 
     useEffect(() => {
         if (selectedUserId) {
@@ -102,7 +112,7 @@ export default function Chat(){
     }, [selectedUserId] );
 
 
-    const excludeMainUser = {...onlineUsers};
+    const excludeMainUser = {...onlinePeople};
     delete excludeMainUser[id];
 
     const messagesWithoutDupes = _.uniqBy(messages, '_id');
@@ -115,7 +125,7 @@ export default function Chat(){
             <Icon name={'logo'}/>
             <div className="flex-grow">
 
-            {Object.keys(excludeMainUser).sort().map(userId => (
+            {Object.keys(excludeMainUser).map(userId => (
                 <Contact
                     key={userId}
                     id={userId}
@@ -124,12 +134,12 @@ export default function Chat(){
                     onClick={() => {setSelectedUserId(userId);console.log({userId})}}
                     selected={userId === selectedUserId} />
           ))}
-            {Object.keys(offlineUsers).sort().map(userId => (
+            {Object.keys(offlinePeople).map(userId => (
                 <Contact
                     key={userId}
                     id={userId}
                     online={false}
-                    username={offlineUsers[userId].username}
+                    username={offlinePeople[userId].username}
                     onClick={() => setSelectedUserId(userId)}
                     selected={userId === selectedUserId} />
           ))}
