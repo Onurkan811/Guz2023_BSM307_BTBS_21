@@ -121,7 +121,6 @@ const wss = new ws.WebSocketServer({server});
 wss.on('connection', (connection, req) => {
 
     function notifyOnlineUsers(){
-            //finding online user when user connected
         [...wss.clients].forEach(client => {
             client.send(JSON.stringify({
             online: [...wss.clients].map(c => ({userId:c.userId, username:c.username}))
@@ -129,7 +128,7 @@ wss.on('connection', (connection, req) => {
         ));
     });
     }
-    //Pinging user to is online or not
+
     connection.timer = setInterval(() => {
         connection.ping();
         connection.deathTimer = setTimeout(() => {
