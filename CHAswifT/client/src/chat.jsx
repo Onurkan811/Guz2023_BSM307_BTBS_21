@@ -22,7 +22,7 @@ export default function Chat(){
     },[selectedUserId]);
 
     function connectToWs() {
-        const ws = new WebSocket('wss://guz2023-bsm-307-btbs-21-api.vercel.app');
+        const ws = new WebSocket('ws://echo.websocket.org');
         setWs(ws);
         ws.addEventListener('message', handleMessage);
         ws.addEventListener('close', () => {
