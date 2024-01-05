@@ -17,8 +17,8 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    credentials: true,
     origin: process.env.CLIENT_URL,
+    credentials: true,
 }));
 
 async function getUserDataFromRequest(req){
