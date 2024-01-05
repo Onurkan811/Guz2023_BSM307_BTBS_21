@@ -118,10 +118,10 @@ export default function Chat(){
     const messagesWithoutDupes = _.uniqBy(messages, '_id');
 
     return(
-        <div className="flex h-screen bg-cover" style={{"backgroundImage": "url('../src/assets/wallpaper.png"}} >
+        <div className="flex h-screen" >
         
         {/* Showing online users  */}
-        <div className="bg-white w-1/3 flex flex-col shadow-xl rounded-xl">
+        <div className="bg-white w-1/3 flex flex-col">
             <Icon name={'logo'}/>
             <div className="flex-grow">
 
@@ -146,7 +146,7 @@ export default function Chat(){
             </div>
 
             <div className="p-2 text-center flex items-center justify-center">
-                <span className="mr-2 text-l p-1 font-bold bg-slate-800 text-white rounded-md flex">
+                <span className="mr-2 text-l text-grey-600 flex">
                     <span className="mr-2 text-grey-600 flex">
                     <Icon name={'user'}/>
                     {username}
@@ -154,15 +154,15 @@ export default function Chat(){
                 </span>
                 <button 
                 onClick={logout}
-                className="text-sm bg-slate-800 py-2 px-4 text-white font-bold rounded-md hover:bg-opacity-90">Çıkış Yap</button>
+                className="text-sm bg-blue-100 py-1 px-2 text-gray-500 border rounded-md">Çıkış Yap</button>
             </div>
         </div>
 
-        <div className="flex flex-col bg-slate-900 w-2/3 p-2 bg-opacity-30 shadow-xl backdrop-blur-sm  ">
+        <div className="flex flex-col bg-blue-50 w-2/3 p-2">
             <div className="flex-grow">
                 {!selectedUserId && (
                     <div className="flex h-full flex-grow items-center justify-center">
-                        <div className="text-white font-bold text-4x1">&larr; Mesajlaşmak için bir kullanıcı seçin</div>
+                        <div className="text-gray-400">&larr; Mesajlaşmak için bir kullanıcı seçin</div>
                     </div>
                 )}</div>
                 {!!selectedUserId &&(
@@ -171,7 +171,7 @@ export default function Chat(){
                 <div className="overflow-y-scroll absolute top-0 left-0 right-0 bottom-2">
                     {messagesWithoutDupes.map(message =>(
                     <div key={message._id} className={(message.sender === id ? 'text-right': 'text-left')}>
-                        <div className={"text-left inline-block p-2 my-2 rounded-md text-sm "+(message.sender === id ? 'bg-slate-800 text-white':'bg-white text-slate-800')}>
+                        <div className={"text-left inline-block p-2 my-2 rounded-md text-sm "+(message.sender === id ? 'bg-blue-500 text-white':'bg-white text-gray-500')}>
                             {message.text}
                         </div>
                     </div>
@@ -189,8 +189,8 @@ export default function Chat(){
                     value={newMessageText}
                     onChange={ev => setNewMessageText(ev.target.value)}
                     placeholder="Mesajınızı buraya yazın"
-                    className="bg-slate-800 flex-grow rounded-md p-2 bg-transparent border-0 border-b-2 border-gray-300 apperance-none dark:focus:border-blue-900 focus:outline-none focus:ring-0 focus:text-white focus:border-blue-600 hadow-xl backdrop-blur-sm bg-opacity-50 " />
-                <button type="submit" className="bg-slate-800 p-2 text-white rounded-md">
+                    className="bg-white flex-grow border rounded-sm p-2" />
+                <button type="submit" className="bg-blue-500 p-2 text-white rounded-sm">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" dataSlot="icon" className="w-6 h-6"><path strokeLinecap="round" strokeLinejoin="round" d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" /></svg>
                 </button>
             </form>                

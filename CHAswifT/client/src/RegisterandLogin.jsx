@@ -31,7 +31,7 @@ export default function RegisterAndLogin() {
                     type="password" placeholder="Şifre" 
                     className="block w-full py-2.3 text-4x1 font-bold text-sm text-white text-center mb-6 bg-transparent border-0 border-b-2 border-gray-300 apperance-none dark:focus:border-blue-900 focus:outline-none focus:ring-0 focus:text-white focus:border-blue-600 "/>
 
-                <button className="bg-blue-950 text-white font-bold text-4x1 block w-full rounded-md p-2 border hover:bg-opacity-50 hover:border-opacity-20   " >
+                <button className="bg-blue-950 text-white block w-full rounded-sm p-2" >
                     {isLoginOrRegister === 'register' ? 'KAYIT OL': 'GİRİŞ YAP'}
                 </button>
 
