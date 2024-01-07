@@ -16,13 +16,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({ 
-    origin: 'https://chaswift-api.onrender.com/', 
-    methods: 'GET, POST, PUT',
-    allowedHeaders: 'Content-Type, Authorization',
-    credentials: true,
-    exposedHeaders: 'X-Custom-Header',
-}));
+app.use(cors());
 
 async function getUserDataFromRequest(req){
     return new Promise((resolve, reject)=> {
