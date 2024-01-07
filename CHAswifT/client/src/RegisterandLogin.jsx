@@ -9,7 +9,7 @@ export default function RegisterAndLogin() {
     const [isLoginOrRegister, setIsLoginOrRegister] = useState('register');
     const {setUsername:setLoggedInUsername, setId} = useContext(UserContext);
     async function handleSubmit(ev) {
-        const url = isLoginOrRegister === 'register' ? 'register' : 'login';
+        const url = isLoginOrRegister === 'register' ? 'https://chaswift-api.onrender.com/register' : 'https://chaswift-api.onrender.com/login';
         ev.preventDefault();
         const {data} = await axios.post(url, {username,password});
         setLoggedInUsername(username);

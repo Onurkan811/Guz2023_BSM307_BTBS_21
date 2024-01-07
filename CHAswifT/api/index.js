@@ -16,7 +16,13 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors());
+app.use(cors({ 
+    origin: 'https://chaswift.vercel.app/', 
+    methods: 'GET, POST, PUT',
+    allowedHeaders: 'Content-Type, Authorization',
+    credentials: true,
+    exposedHeaders: 'X-Custom-Header',
+}));
 
 async function getUserDataFromRequest(req){
     return new Promise((resolve, reject)=> {

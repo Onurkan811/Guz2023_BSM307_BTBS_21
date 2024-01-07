@@ -53,7 +53,7 @@ export default function Chat(){
     }
 
     function logout() {
-        axios.post('/logout').then(() => {
+        axios.post('https://chaswift-api.onrender.com/logout').then(() => {
           setWs(null);
           cookiejs.remove('token');
           window.location.reload(true);
@@ -91,7 +91,7 @@ export default function Chat(){
     },[messages]);
 
     useEffect(() => {
-        axios.get('/people').then(res => {
+        axios.get('https://chaswift-api.onrender.com/people').then(res => {
           const offlinePeopleArr = res.data
             .filter(p => p._id !== id)
             .filter(p => !Object.keys(onlinePeople).includes(p._id));
@@ -105,7 +105,7 @@ export default function Chat(){
 
     useEffect(() => {
         if (selectedUserId) {
-            axios.get('/messages/'+selectedUserId).then(res =>{
+            axios.get('https://chaswift-api.onrender.com/messages/'+selectedUserId).then(res =>{
                 setMessages(res.data);
             });
         }
