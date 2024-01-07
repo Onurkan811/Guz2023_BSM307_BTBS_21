@@ -17,7 +17,7 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({ 
-    origin: 'https://chaswift.vercel.app/', 
+    origin: 'https://chaswift-api.onrender.com/', 
     methods: 'GET, POST, PUT',
     allowedHeaders: 'Content-Type, Authorization',
     credentials: true,
