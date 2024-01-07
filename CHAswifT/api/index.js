@@ -16,11 +16,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use(cors({
-    credentials: true,
-    origin: [process.env.LOCAL_CLIENT_URL,
-            process.env.CLIENT_URL] 
-}));
+app.use(cors());
 
 async function getUserDataFromRequest(req){
     return new Promise((resolve, reject)=> {
