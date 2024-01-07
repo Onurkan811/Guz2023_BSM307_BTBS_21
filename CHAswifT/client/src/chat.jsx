@@ -22,7 +22,7 @@ export default function Chat(){
     },[selectedUserId]);
 
     function connectToWs() {
-        const ws = new WebSocket('ws://localhost:4000');
+        const ws = new WebSocket('ws://chaswift-api.onrender.com/:4000');
         setWs(ws);
         ws.addEventListener('message', handleMessage);
         ws.addEventListener('close', () => {
