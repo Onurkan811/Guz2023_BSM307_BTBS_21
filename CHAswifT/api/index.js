@@ -17,8 +17,9 @@ const app = express();
 app.use(express.json());
 app.use(cookieParser());
 app.use(cors({
-    origin: process.env.CLIENT_URL,
     credentials: true,
+    origin: [process.env.LOCAL_CLIENT_URL,
+            process.env.CLIENT_URL] 
 }));
 
 async function getUserDataFromRequest(req){
@@ -121,7 +122,6 @@ const wss = new ws.WebSocketServer({server});
 wss.on('connection', (connection, req) => {
 
     function notifyOnlineUsers(){
-            //finding online user when user connected
         [...wss.clients].forEach(client => {
             client.send(JSON.stringify({
             online: [...wss.clients].map(c => ({userId:c.userId, username:c.username}))
@@ -129,7 +129,7 @@ wss.on('connection', (connection, req) => {
         ));
     });
     }
-    //Pinging user to is online or not
+
     connection.timer = setInterval(() => {
         connection.ping();
         connection.deathTimer = setTimeout(() => {
