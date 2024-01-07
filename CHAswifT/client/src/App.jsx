@@ -3,7 +3,7 @@ import {UserContextProvider } from "./UserContext";
 import Routes from "./Routes";
 
 function App() {
-  axios.defaults.baseURL= "chaswift-api.onrender.com"
+  axios.defaults.baseURL = "https://chaswift-api.onrender.com";
   axios.defaults.withCredentials= true;
   return (
     <UserContextProvider>
